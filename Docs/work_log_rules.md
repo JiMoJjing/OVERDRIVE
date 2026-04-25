@@ -32,7 +32,7 @@
 ## 작업 로그 템플릿
 
 ```md
-# Work Log - YYYY-MM-DD
+# Work Log - YYYY-MM-DD - 작업 내용 요약
 
 ## Branch
 
