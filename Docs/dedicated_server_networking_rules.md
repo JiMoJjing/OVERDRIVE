@@ -10,11 +10,15 @@
 
 ## 서버 권한으로 처리할 것
 
-- 장비 변경 검증
-- Ability 부여 / 제거
 - Ready 상태 확정
 - 미션 시작 / 종료
-- 피해 처리
+- 파츠 드랍 생성
+- 파츠 획득 검증
+- 파츠 장착 / 교체 검증
+- Ability 부여 / 제거
+- GameplayEffect 적용 / 제거
+- 발사 판정
+- 피격 / 피해 처리
 - 사망 처리
 - 보상 처리
 - 결과 화면 상태
@@ -30,6 +34,8 @@
 - 로컬 예측 또는 시각적 피드백
 - 서버 요청 전송
 - Replicated 상태를 기반으로 한 화면 갱신
+- 무기 장착 상태의 시각적 표현
+- Hand IK, 조준 보정 등 로컬 시각 품질 처리
 
 클라이언트의 로컬 결과를 권한 있는 결과로 취급하지 않습니다.
 
@@ -43,6 +49,14 @@
 - Replicated 변수는 목적이 명확해야 합니다.
 - Late Join을 고려해야 하는 상태는 Replicated State로 관리합니다.
 
+총기 파츠 관련 Replication은 다음 상태를 우선 검토합니다.
+
+- 현재 장착된 파츠 ID
+- 파츠 슬롯별 장착 상태
+- 파츠 드랍 Actor의 유효 상태
+- 무기 발사에 필요한 최소 상태
+- UI 갱신에 필요한 파츠 요약 정보
+
 ---
 
 ## RPC 사용 기준
@@ -54,9 +68,12 @@
 예시:
 
 ```text
-ServerRequestChangePart
 ServerSetReady
 ServerRequestStartMission
+ServerRequestPickupWeaponPart
+ServerRequestEquipWeaponPart
+ServerRequestFireWeapon
+ServerRequestReloadWeapon
 ```
 
 서버는 요청을 검증해야 합니다.
@@ -70,6 +87,7 @@ ServerRequestStartMission
 ```text
 ClientShowErrorMessage
 ClientOpenResultScreen
+ClientNotifyPartPickupFailed
 ```
 
 ### Multicast RPC
@@ -80,6 +98,7 @@ ClientOpenResultScreen
 
 ```text
 MulticastPlayBossIntroEffect
+MulticastPlayWeaponImpactEffect
 ```
 
 지속 상태 동기화 용도로 남용하지 않습니다.
@@ -97,3 +116,5 @@ MulticastPlayBossIntroEffect
 - Server Travel
 - Client Disconnect
 - Replicated State 초기화
+- 파츠 드랍 Actor가 이미 획득된 뒤의 동기화
+- 파츠 장착 직후 Ability / GameplayEffect 상태 동기화

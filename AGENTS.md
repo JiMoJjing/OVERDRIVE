@@ -9,7 +9,6 @@
 
 ---
 
-
 ## 프로젝트 이름
 
 OVERDRIVE
@@ -26,14 +25,14 @@ OVERDRIVE
 - GAS 활용 능력
 - Dedicated Server 기반 멀티플레이 구조 이해
 - 서버 권한 기반 게임플레이 구현 능력
-- Modular Mech Equipment System 설계/구현 능력
+- Modular Weapon Parts System 설계/구현 능력
 - AI 활용 개발 파이프라인 구축 능력
 
 게임 방향은 다음과 같습니다.
 
 - 장르: Co-op PvE Mission TPS
-- 흐름: 로비 → 메카 커스터마이징 → 미션 시작 → 선형 PvE 전투 → 거대 보스전 → 결과 화면
-- 초기 목표: Dedicated Server 로비와 플레이어 메카 파츠 커스터마이징 프로토타입
+- 흐름: 로비 → Ready → 미션 시작 → 선형 PvE 전투 → 총기 파츠 드랍/장착 → 거대 보스전 → 결과 화면
+- 초기 목표: Dedicated Server 로비와 기본 인간형 플레이어, 총기 파츠 드랍/장착 프로토타입
 
 자세한 프로젝트 내용은 다음 문서를 참조합니다.
 
@@ -78,16 +77,16 @@ OVERDRIVE
 ### GAS 관련 작업을 할 때
 
 - `Docs/gas_rules.md`
-- `Docs/mech_equipment_rules.md`
+- `Docs/weapon_parts_rules.md`
 
 ### Dedicated Server, Replication, RPC, GameMode/GameState/PlayerState 관련 작업을 할 때
 
 - `Docs/dedicated_server_networking_rules.md`
 - `Docs/unreal_development_rules.md`
 
-### 메카 파츠, 장비, 커스터마이징 관련 작업을 할 때
+### 총기 파츠, 무기 장착, 런타임 커스터마이징 관련 작업을 할 때
 
-- `Docs/mech_equipment_rules.md`
+- `Docs/weapon_parts_rules.md`
 - `Docs/gas_rules.md`
 - `Docs/dedicated_server_networking_rules.md`
 
@@ -122,6 +121,7 @@ OVERDRIVE
 - 아키텍처를 조용히 변경하지 않습니다.
 - 한 번에 너무 많은 기능을 구현하지 않습니다.
 - 영리한 코드보다 명확한 코드를 우선합니다.
+- 캐릭터 커스터마이징보다 총기 파츠 시스템과 전투 구조를 우선합니다.
 
 작업 후에는 다음을 정리합니다.
 
@@ -152,6 +152,7 @@ OVERDRIVE
 - 현재 마일스톤 밖의 대형 시스템 추가
 - Force Push 또는 Git History 재작성
 - 불필요한 Unreal Generated File 수정
+- 복잡한 인벤토리, 파츠 등급, 랜덤 옵션, 시너지 빌드 시스템 추가
 
 ---
 

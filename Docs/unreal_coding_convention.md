@@ -27,12 +27,13 @@ Unreal Engine의 일반적인 C++ 스타일을 따릅니다.
 
 ```cpp
 AMissionGameMode
-AMechCharacter
-UMechEquipmentComponent
-UMechPartDefinition
-FMechPartRuntimeData
-EMechPartSlot
-IMechInteractableInterface
+AOverdriveCharacter
+UWeaponComponent
+UWeaponPartsComponent
+UWeaponPartDefinition
+FWeaponPartRuntimeData
+EWeaponPartSlot
+IWeaponPartInteractableInterface
 bool bIsReady
 ```
 
@@ -45,9 +46,10 @@ bool bIsReady
 좋은 예시:
 
 ```cpp
-UMechEquipmentComponent
-UMechPartDefinition
-UGameplayAbility_MechWeaponFire
+UWeaponPartsComponent
+UWeaponPartDefinition
+UGameplayAbility_WeaponFire
+UGameplayAbility_WeaponReload
 AMissionGameMode
 AMissionPlayerState
 ```
@@ -74,14 +76,15 @@ C++에서 담당할 것:
 - 서버 권한 판단
 - Replication 구조
 - GAS Ability / Effect / Attribute 연결
-- 장비 시스템의 핵심 구조
-- 피해 / 사망 / 보상 처리
+- 총기 파츠 시스템의 핵심 구조
+- 발사 / 피해 / 사망 / 보상 처리
 
 Blueprint에서 담당할 것:
 
 - 시각적 조립
 - 에셋 할당
 - Animation Blueprint
+- Hand IK 시각 조정
 - UI 배치
 - 데이터 튜닝
 - 간단한 연결 로직

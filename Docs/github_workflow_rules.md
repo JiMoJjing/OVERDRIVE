@@ -23,11 +23,11 @@ refactor/<target-name>
 
 ```text
 feature/lobby-ready-state
-feature/mech-equipment-component
-feature/gas-ability-grant
-fix/equipment-replication-desync
+feature/weapon-parts-component
+feature/gas-weapon-ability-grant
+fix/weapon-part-replication-desync
 docs/update-gas-rules
-refactor/split-equipment-runtime-data
+refactor/split-weapon-part-runtime-data
 ```
 
 ---
@@ -41,7 +41,8 @@ refactor/split-equipment-runtime-data
 예시:
 
 - 로비 Ready 상태 추가
-- 메카 파츠 장착 기능 추가
+- 총기 파츠 드랍 기능 추가
+- 총기 파츠 장착 기능 추가
 - GAS Ability Grant 구조 추가
 
 ### fix
@@ -50,7 +51,7 @@ refactor/split-equipment-runtime-data
 
 예시:
 
-- 클라이언트 장비 외형 동기화 오류 수정
+- 클라이언트 무기 파츠 동기화 오류 수정
 - Ready 상태 Replication 누락 수정
 - Dedicated Server 실행 오류 수정
 
@@ -70,7 +71,7 @@ refactor/split-equipment-runtime-data
 
 예시:
 
-- 장비 데이터와 런타임 상태 분리
+- 무기 파츠 데이터와 런타임 상태 분리
 - 컴포넌트 책임 분리
 - 중복 코드 제거
 
@@ -97,9 +98,9 @@ type: summary
 
 ```text
 feat: add lobby ready state replication
-fix: resolve equipment desync on clients
-docs: add GAS equipment rules
-refactor: split mech equipment data from runtime state
+fix: resolve weapon part desync on clients
+docs: add GAS weapon part rules
+refactor: split weapon part data from runtime state
 ```
 
 ---
