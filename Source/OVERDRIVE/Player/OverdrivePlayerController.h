@@ -14,8 +14,15 @@ class OVERDRIVE_API AOverdrivePlayerController : public APlayerController
 public:
 	virtual void BeginPlay() override;
 
+	virtual void OnRep_PlayerState() override;
+
+	virtual void PostSeamlessTravel() override;
+
 	UFUNCTION(BlueprintCallable, Category = "OVERDRIVE|Lobby")
 	void RequestSetReady(bool bNewReady);
+
+	UFUNCTION(BlueprintCallable, Category = "OVERDRIVE|Lobby")
+	void RequestStartMission();
 
 	UFUNCTION(BlueprintCallable, Category = "OVERDRIVE|Lobby")
 	void ShowLobbyWidget();
@@ -26,6 +33,18 @@ public:
 private:
 	UFUNCTION(Server, Reliable)
 	void ServerSetReady(bool bNewReady);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestStartMission();
+
+	UFUNCTION(Client, Reliable)
+	void ClientHandlePostSeamlessTravel();
+
+	void HandlePostSeamlessTravelOnClient();
+
+	void RefreshLobbyWidgetBindings();
+
+	bool ShouldShowLobbyWidget() const;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "OVERDRIVE|Lobby")

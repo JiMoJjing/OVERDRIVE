@@ -14,11 +14,17 @@ void AOverdrivePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AOverdrivePlayerState, bIsReady);
+	DOREPLIFETIME(AOverdrivePlayerState, bIsLobbyLeader);
 }
 
 bool AOverdrivePlayerState::IsReady() const
 {
 	return bIsReady;
+}
+
+bool AOverdrivePlayerState::IsLobbyLeader() const
+{
+	return bIsLobbyLeader;
 }
 
 void AOverdrivePlayerState::SetReady(bool bNewReady)
@@ -33,7 +39,24 @@ void AOverdrivePlayerState::SetReady(bool bNewReady)
 	ForceNetUpdate();
 }
 
+void AOverdrivePlayerState::SetLobbyLeader(bool bNewLobbyLeader)
+{
+	if (!HasAuthority() || bIsLobbyLeader == bNewLobbyLeader)
+	{
+		return;
+	}
+
+	bIsLobbyLeader = bNewLobbyLeader;
+	OnLobbyLeaderChanged.Broadcast(bIsLobbyLeader);
+	ForceNetUpdate();
+}
+
 void AOverdrivePlayerState::OnRep_IsReady()
 {
 	OnLobbyReadyChanged.Broadcast(bIsReady);
+}
+
+void AOverdrivePlayerState::OnRep_IsLobbyLeader()
+{
+	OnLobbyLeaderChanged.Broadcast(bIsLobbyLeader);
 }

@@ -16,6 +16,11 @@ void UOverdriveLobbyWidget::NativeConstruct()
 		ReadyButton->OnClicked.AddDynamic(this, &ThisClass::HandleReadyButtonClicked);
 	}
 
+	if (IsValid(StartMissionButton))
+	{
+		StartMissionButton->OnClicked.AddDynamic(this, &ThisClass::HandleStartMissionButtonClicked);
+	}
+
 	RefreshLobbyBindings();
 }
 
@@ -24,6 +29,11 @@ void UOverdriveLobbyWidget::NativeDestruct()
 	if (IsValid(ReadyButton))
 	{
 		ReadyButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleReadyButtonClicked);
+	}
+
+	if (IsValid(StartMissionButton))
+	{
+		StartMissionButton->OnClicked.RemoveDynamic(this, &ThisClass::HandleStartMissionButtonClicked);
 	}
 
 	UnbindFromOwningPlayerState();
@@ -43,12 +53,24 @@ void UOverdriveLobbyWidget::RequestSetReady(bool bNewReady)
 	OverdrivePlayerController->RequestSetReady(bNewReady);
 }
 
+void UOverdriveLobbyWidget::RequestStartMission()
+{
+	AOverdrivePlayerController* OverdrivePlayerController = GetOwningPlayer<AOverdrivePlayerController>();
+	if (!IsValid(OverdrivePlayerController))
+	{
+		return;
+	}
+
+	OverdrivePlayerController->RequestStartMission();
+}
+
 void UOverdriveLobbyWidget::RefreshLobbyBindings()
 {
 	BindToOwningPlayerState();
 	BindToLobbyGameState();
 
 	HandleOwningPlayerReadyChanged(IsOwningPlayerReady());
+	HandleOwningPlayerLobbyLeaderChanged(IsOwningPlayerLobbyLeader());
 
 	const FOverdriveLobbySummary LobbySummary = GetLobbySummary();
 	HandleLobbySummaryChanged(LobbySummary.PlayerCount, LobbySummary.ReadyPlayerCount, LobbySummary.LobbyState);
@@ -58,6 +80,12 @@ bool UOverdriveLobbyWidget::IsOwningPlayerReady() const
 {
 	const AOverdrivePlayerState* OverdrivePlayerState = GetOwningPlayerState<AOverdrivePlayerState>();
 	return IsValid(OverdrivePlayerState) ? OverdrivePlayerState->IsReady() : false;
+}
+
+bool UOverdriveLobbyWidget::IsOwningPlayerLobbyLeader() const
+{
+	const AOverdrivePlayerState* OverdrivePlayerState = GetOwningPlayerState<AOverdrivePlayerState>();
+	return IsValid(OverdrivePlayerState) ? OverdrivePlayerState->IsLobbyLeader() : false;
 }
 
 FOverdriveLobbySummary UOverdriveLobbyWidget::GetLobbySummary() const
@@ -77,15 +105,28 @@ void UOverdriveLobbyWidget::HandleReadyButtonClicked()
 	RequestSetReady(!IsOwningPlayerReady());
 }
 
+void UOverdriveLobbyWidget::HandleStartMissionButtonClicked()
+{
+	RequestStartMission();
+}
+
 void UOverdriveLobbyWidget::HandleOwningPlayerReadyChanged(bool bNewReady)
 {
 	RefreshReadyText(bNewReady);
 	OnOwningPlayerReadyChanged(bNewReady);
 }
 
+void UOverdriveLobbyWidget::HandleOwningPlayerLobbyLeaderChanged(bool bNewLobbyLeader)
+{
+	RefreshLeaderText(bNewLobbyLeader);
+	RefreshStartMissionButton();
+	OnOwningPlayerLobbyLeaderChanged(bNewLobbyLeader);
+}
+
 void UOverdriveLobbyWidget::HandleLobbySummaryChanged(int32 PlayerCount, int32 ReadyPlayerCount, EOverdriveLobbyState LobbyState)
 {
 	RefreshLobbySummaryText(PlayerCount, ReadyPlayerCount, LobbyState);
+	RefreshStartMissionButton();
 	OnLobbySummaryChanged(PlayerCount, ReadyPlayerCount, LobbyState);
 }
 
@@ -103,6 +144,7 @@ void UOverdriveLobbyWidget::BindToOwningPlayerState()
 	if (IsValid(BoundPlayerState))
 	{
 		BoundPlayerState->OnLobbyReadyChanged.AddDynamic(this, &ThisClass::HandleOwningPlayerReadyChanged);
+		BoundPlayerState->OnLobbyLeaderChanged.AddDynamic(this, &ThisClass::HandleOwningPlayerLobbyLeaderChanged);
 	}
 }
 
@@ -129,6 +171,7 @@ void UOverdriveLobbyWidget::UnbindFromOwningPlayerState()
 	if (IsValid(BoundPlayerState))
 	{
 		BoundPlayerState->OnLobbyReadyChanged.RemoveDynamic(this, &ThisClass::HandleOwningPlayerReadyChanged);
+		BoundPlayerState->OnLobbyLeaderChanged.RemoveDynamic(this, &ThisClass::HandleOwningPlayerLobbyLeaderChanged);
 	}
 
 	BoundPlayerState = nullptr;
@@ -157,6 +200,14 @@ void UOverdriveLobbyWidget::RefreshReadyText(bool bNewReady)
 	}
 }
 
+void UOverdriveLobbyWidget::RefreshLeaderText(bool bNewLobbyLeader)
+{
+	if (IsValid(LobbyLeaderText))
+	{
+		LobbyLeaderText->SetText(bNewLobbyLeader ? FText::FromString(TEXT("Leader: Yes")) : FText::FromString(TEXT("Leader: No")));
+	}
+}
+
 void UOverdriveLobbyWidget::RefreshLobbySummaryText(int32 PlayerCount, int32 ReadyPlayerCount, EOverdriveLobbyState LobbyState)
 {
 	if (IsValid(PlayerCountText))
@@ -172,6 +223,23 @@ void UOverdriveLobbyWidget::RefreshLobbySummaryText(int32 PlayerCount, int32 Rea
 	if (IsValid(LobbyStateText))
 	{
 		LobbyStateText->SetText(FText::Format(FText::FromString(TEXT("State: {0}")), GetLobbyStateText(LobbyState)));
+	}
+}
+
+void UOverdriveLobbyWidget::RefreshStartMissionButton()
+{
+	if (!IsValid(StartMissionButton))
+	{
+		return;
+	}
+
+	const FOverdriveLobbySummary LobbySummary = GetLobbySummary();
+	const bool bCanRequestStart = IsOwningPlayerLobbyLeader() && LobbySummary.PlayerCount > 0 && LobbySummary.PlayerCount == LobbySummary.ReadyPlayerCount && LobbySummary.LobbyState == EOverdriveLobbyState::ReadyToStart;
+	StartMissionButton->SetIsEnabled(bCanRequestStart);
+
+	if (IsValid(StartMissionButtonText))
+	{
+		StartMissionButtonText->SetText(bCanRequestStart ? FText::FromString(TEXT("Start Mission")) : FText::FromString(TEXT("Waiting")));
 	}
 }
 

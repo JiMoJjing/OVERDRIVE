@@ -4,7 +4,8 @@ import unreal
 PROJECT_ROOT = "/Game"
 UI_DIR = f"{PROJECT_ROOT}/UI"
 WIDGET_PATH = f"{UI_DIR}/WBP_LobbyTest"
-LOBBY_MAP = "/Game/Lobby"
+LOBBY_MAP = "/Game/Maps/Lobby"
+MISSION_MAP = "/Game/Maps/MissionPrototype"
 
 # UE 5.7 Python Commandlet does not expose stable WidgetBlueprint designer tree editing APIs.
 # This script creates the Widget Blueprint asset and configures the Lobby map.
@@ -38,17 +39,18 @@ def create_or_update_lobby_widget():
     unreal.EditorAssetLibrary.save_loaded_asset(widget_blueprint)
 
 
-def configure_lobby_map():
-    lobby_game_mode_class = get_class("/Script/OVERDRIVE.OverdriveLobbyGameMode", "OverdriveLobbyGameMode")
+def configure_map(map_path, game_mode_class_path, fallback_name):
+    game_mode_class = get_class(game_mode_class_path, fallback_name)
     level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    level_editor_subsystem.load_level(LOBBY_MAP)
+    level_editor_subsystem.load_level(map_path)
     world = unreal_editor_subsystem.get_editor_world()
     world_settings = world.get_world_settings()
-    world_settings.set_editor_property("default_game_mode", lobby_game_mode_class)
+    world_settings.set_editor_property("default_game_mode", game_mode_class)
     level_editor_subsystem.save_current_level()
 
 
 create_or_update_lobby_widget()
-configure_lobby_map()
-unreal.log("Created WBP_LobbyTest and configured Lobby map for OverdriveLobbyGameMode.")
+configure_map(LOBBY_MAP, "/Script/OVERDRIVE.OverdriveLobbyGameMode", "OverdriveLobbyGameMode")
+configure_map(MISSION_MAP, "/Script/OVERDRIVE.OverdriveMissionGameMode", "OverdriveMissionGameMode")
+unreal.log("Created WBP_LobbyTest and configured Lobby/Mission maps.")
