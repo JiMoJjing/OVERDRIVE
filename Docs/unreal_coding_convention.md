@@ -101,3 +101,59 @@ Blueprint에서 담당할 것:
 - Replicated 변수는 목적이 명확해야 합니다.
 - RPC는 필요한 경우에만 사용합니다.
 - 임시 구현은 TODO로 남깁니다.
+
+---
+
+## 클래스 선언 순서
+
+클래스 내부에서는 접근 지정자별로 함수 선언을 먼저 모으고, 그 아래에 변수 선언을 배치합니다.
+
+권장 순서:
+
+```cpp
+public:
+	// Constructors / overrides / public functions
+
+protected:
+	// Protected functions
+
+private:
+	// Private functions
+
+public:
+	// Public variables, delegates, BlueprintAssignable events
+
+protected:
+	// Protected variables
+
+private:
+	// Private variables
+```
+
+- 함수와 변수가 섞이지 않게 합니다.
+- `OnRep`, RPC 구현 함수도 함수 선언 영역에 둡니다.
+- `UPROPERTY` 변수와 Delegate 변수는 함수 선언 뒤에 둡니다.
+
+---
+
+## 줄바꿈 기준
+
+함수 선언, 함수 호출, Delegate 선언, 조건식은 한 줄로 읽을 수 있으면 임의로 줄바꿈하지 않습니다.
+
+좋은 예시:
+
+```cpp
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnLobbySummaryChanged, int32, PlayerCount, int32, ReadyPlayerCount, EOverdriveLobbyState, LobbyState);
+
+void SetLobbySummary(int32 NewPlayerCount, int32 NewReadyPlayerCount, EOverdriveLobbyState NewLobbyState);
+
+if (LobbySummary.PlayerCount == NewPlayerCount && LobbySummary.ReadyPlayerCount == NewReadyPlayerCount && LobbySummary.LobbyState == NewLobbyState)
+{
+	return;
+}
+
+OnLobbySummaryChanged.Broadcast(LobbySummary.PlayerCount, LobbySummary.ReadyPlayerCount, LobbySummary.LobbyState);
+```
+
+- 단순히 길다는 이유만으로 인자 목록이나 조건식을 여러 줄로 나누지 않습니다.
+- 줄바꿈은 중첩 람다, 복잡한 체이닝, 여러 단계의 계산처럼 한 줄이 오히려 의미를 흐릴 때만 사용합니다.
