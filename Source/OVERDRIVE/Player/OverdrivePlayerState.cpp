@@ -2,11 +2,20 @@
 
 #include "OverdrivePlayerState.h"
 
+#include "AbilitySystemComponent.h"
+#include "../GAS/OverdriveAttributeSet.h"
 #include "Net/UnrealNetwork.h"
 
 AOverdrivePlayerState::AOverdrivePlayerState()
 {
 	bReplicates = true;
+	SetNetUpdateFrequency(100.0f);
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UOverdriveAttributeSet>(TEXT("AttributeSet"));
 }
 
 void AOverdrivePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -15,6 +24,16 @@ void AOverdrivePlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 	DOREPLIFETIME(AOverdrivePlayerState, bIsReady);
 	DOREPLIFETIME(AOverdrivePlayerState, bIsLobbyLeader);
+}
+
+UAbilitySystemComponent* AOverdrivePlayerState::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UOverdriveAttributeSet* AOverdrivePlayerState::GetOverdriveAttributeSet() const
+{
+	return AttributeSet;
 }
 
 bool AOverdrivePlayerState::IsReady() const

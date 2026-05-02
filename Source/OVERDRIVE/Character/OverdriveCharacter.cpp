@@ -3,15 +3,16 @@
 #include "OverdriveCharacter.h"
 
 #include "../Camera/OverdriveCameraComponent.h"
-#include "../Combat/OverdriveHitReactInterface.h"
-#include "DrawDebugHelpers.h"
+#include "../Player/OverdrivePlayerState.h"
+#include "../Weapons/OverdriveWeaponBase.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "../Weapons/OverdriveWeaponBase.h"
 
 AOverdriveCharacter::AOverdriveCharacter()
 {
@@ -51,16 +52,17 @@ void AOverdriveCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	// Future GAS initialization point for server-side Owner/Avatar binding.
+	InitializeAbilityActorInfo();
 
 	SpawnDefaultWeapon();
+	GrantDefaultAbilities();
 }
 
 void AOverdriveCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	// Future GAS initialization point for client-side Owner/Avatar binding.
+	InitializeAbilityActorInfo();
 }
 
 void AOverdriveCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -92,7 +94,7 @@ void AOverdriveCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 	if (FireAction)
 	{
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AOverdriveCharacter::StartFire);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &AOverdriveCharacter::StartFire);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AOverdriveCharacter::StopFire);
 		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Canceled, this, &AOverdriveCharacter::StopFire);
 	}
@@ -167,7 +169,7 @@ void AOverdriveCharacter::StartFire()
 	bWantsToFire = true;
 	RefreshDesiredRotationMode();
 
-	HandleFire();
+	ActivateWeaponFireAbility();
 }
 
 void AOverdriveCharacter::StopFire()
@@ -238,6 +240,23 @@ void AOverdriveCharacter::AddDefaultInputMappingContext() const
 	InputSubsystem->AddMappingContext(DefaultMappingContext, DefaultMappingPriority);
 }
 
+void AOverdriveCharacter::InitializeAbilityActorInfo()
+{
+	AOverdrivePlayerState* OverdrivePlayerState = GetPlayerState<AOverdrivePlayerState>();
+	if (!OverdrivePlayerState)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* AbilitySystemComponent = OverdrivePlayerState->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->InitAbilityActorInfo(OverdrivePlayerState, this);
+}
+
 void AOverdriveCharacter::SpawnDefaultWeapon()
 {
 	if (!HasAuthority() || !DefaultWeaponClass || EquippedWeapon)
@@ -284,60 +303,48 @@ void AOverdriveCharacter::AttachEquippedWeapon() const
 	EquippedWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
 }
 
-void AOverdriveCharacter::HandleFire()
+void AOverdriveCharacter::GrantDefaultAbilities()
 {
-	if (!IsLocallyControlled() || !EquippedWeapon || !Controller)
+	if (!HasAuthority() || !DefaultWeaponFireAbility)
 	{
 		return;
 	}
 
-	FVector ViewLocation;
-	FRotator ViewRotation;
-	Controller->GetPlayerViewPoint(ViewLocation, ViewRotation);
-
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(OverdriveWeaponFire), false, this);
-	QueryParams.AddIgnoredActor(EquippedWeapon);
-
-	const FVector AimTraceStart = ViewLocation;
-	const FVector AimTraceEnd = AimTraceStart + ViewRotation.Vector() * AimTraceDistance;
-
-	FHitResult AimHitResult;
-	const bool bAimHit = GetWorld()->LineTraceSingleByChannel(AimHitResult, AimTraceStart, AimTraceEnd, ECC_Visibility, QueryParams);
-	const FVector AimTargetPoint = bAimHit ? AimHitResult.ImpactPoint : AimTraceEnd;
-
-	const FVector FireTraceStart = EquippedWeapon->GetMuzzleTransform().GetLocation();
-	FVector FireTraceDirection = (AimTargetPoint - FireTraceStart).GetSafeNormal();
-	if (FireTraceDirection.IsNearlyZero())
+	AOverdrivePlayerState* OverdrivePlayerState = GetPlayerState<AOverdrivePlayerState>();
+	if (!OverdrivePlayerState)
 	{
-		FireTraceDirection = ViewRotation.Vector();
+		return;
 	}
 
-	const FVector FireTraceEnd = FireTraceStart + FireTraceDirection * FireTraceDistance;
-
-	FHitResult FireHitResult;
-	const bool bFireHit = GetWorld()->LineTraceSingleByChannel(FireHitResult, FireTraceStart, FireTraceEnd, ECC_Visibility, QueryParams);
-
-	DrawDebugLine(GetWorld(), AimTraceStart, AimTargetPoint, FColor::Blue, false, 2.0f, 0, 1.0f);
-	DrawDebugSphere(GetWorld(), AimTargetPoint, 10.0f, 12, FColor::Cyan, false, 2.0f);
-
-	const FVector FireDebugEnd = bFireHit ? FireHitResult.ImpactPoint : FireTraceEnd;
-	DrawDebugLine(GetWorld(), FireTraceStart, FireDebugEnd, bFireHit ? FColor::Red : FColor::Green, false, 2.0f, 0, 1.5f);
-
-	if (bFireHit)
+	UAbilitySystemComponent* AbilitySystemComponent = OverdrivePlayerState->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent || AbilitySystemComponent->FindAbilitySpecFromClass(DefaultWeaponFireAbility))
 	{
-		DrawDebugSphere(GetWorld(), FireHitResult.ImpactPoint, 12.0f, 12, FColor::Red, false, 2.0f);
-		UE_LOG(LogTemp, Log, TEXT("Overdrive local fire hit: %s"), *GetNameSafe(FireHitResult.GetActor()));
+		return;
+	}
 
-		AActor* HitActor = FireHitResult.GetActor();
-		if (HitActor && HitActor->GetClass()->ImplementsInterface(UOverdriveHitReactInterface::StaticClass()))
-		{
-			IOverdriveHitReactInterface::Execute_HandleWeaponHit(HitActor, this, FireHitResult);
-		}
-	}
-	else
+	AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultWeaponFireAbility, 1, INDEX_NONE, this));
+}
+
+void AOverdriveCharacter::ActivateWeaponFireAbility()
+{
+	if (!DefaultWeaponFireAbility)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Overdrive local fire missed."));
+		return;
 	}
+
+	const AOverdrivePlayerState* OverdrivePlayerState = GetPlayerState<AOverdrivePlayerState>();
+	if (!OverdrivePlayerState)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* AbilitySystemComponent = OverdrivePlayerState->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->TryActivateAbilityByClass(DefaultWeaponFireAbility);
 }
 
 void AOverdriveCharacter::SetAiming(bool bNewIsAiming)

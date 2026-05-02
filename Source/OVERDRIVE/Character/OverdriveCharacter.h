@@ -8,6 +8,7 @@
 #include "OverdriveCharacter.generated.h"
 
 class UCameraComponent;
+class UGameplayAbility;
 class UInputAction;
 class UInputMappingContext;
 class UOverdriveCameraComponent;
@@ -65,13 +66,17 @@ protected:
 
 	void AddDefaultInputMappingContext() const;
 
+	void InitializeAbilityActorInfo();
+
 	void SpawnDefaultWeapon();
 
 	void EquipWeapon(AOverdriveWeaponBase* NewWeapon);
 
 	void AttachEquippedWeapon() const;
 
-	void HandleFire();
+	void GrantDefaultAbilities();
+
+	void ActivateWeaponFireAbility();
 
 	void SetAiming(bool bNewIsAiming);
 
@@ -121,14 +126,11 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OVERDRIVE|Movement")
 	bool bWantsToFire = false;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OVERDRIVE|Weapon", meta = (ClampMin = "0.0"))
-	float AimTraceDistance = 10000.0f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OVERDRIVE|Weapon", meta = (ClampMin = "0.0"))
-	float FireTraceDistance = 10000.0f;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OVERDRIVE|Weapon")
 	TSubclassOf<AOverdriveWeaponBase> DefaultWeaponClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OVERDRIVE|GAS")
+	TSubclassOf<UGameplayAbility> DefaultWeaponFireAbility;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OVERDRIVE|Weapon")
 	FName WeaponAttachSocketName = TEXT("Weapon_R");
